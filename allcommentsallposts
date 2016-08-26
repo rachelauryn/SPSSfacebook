@@ -1,0 +1,44 @@
+# Installing and/or loading the required R packages.
+packages <- function(x) {
+  x <- as.character(match.call()[[2]])
+  if (!require(x,character.only=TRUE)){
+    install.packages(pkgs=x,repos="http://cran.r-project.org")
+    require(x,character.only=TRUE)
+  }
+}
+
+packages(Rfacebook)
+
+# Getting user specified values
+fb_oauth <- "EAAQa5MSpZBYsBAK5PhybYyKMI5RkLX84i8mpQJpMgd4L4iGEV55TSsnp1I21dipfwrTNkUATermlstKuc0laepBRb5zi8QDi89NkhDsYSYZChQzNt3Bsvq4shaoWOLa0gKR4g2YjQbmogZCL961PD4I8g407ZAsZD"
+number_of_comments <- 100000
+
+#emptying modelerData to be populated with comments
+postData <- modelerData
+modelerData<- data.frame()
+
+for (PostID in postData){
+
+	# Getting the comments and information about it
+	comments <- getPost(post=PostID, token = fb_oauth, n = number_of_comments, comments=TRUE, likes=FALSE)
+	comments <- comments[[2]]
+
+	# Compilling data
+	thispost <- cbind(comments$UserID, comments$Name, comments$Comment, comments$CreatedTime)
+	thispost$PostCommentedOn <- postData$Post
+	modelerData<- rbind(modelerData, thispost)
+	
+}
+
+# Creating the dataframe for the metadata (required by SPSS Modeler)
+var1 <- c(fieldName="UserID", fieldLabel="", fieldStorage="string", fieldMeasure="", fieldFormat="", fieldRole="")
+var2 <- c(fieldName="Name", fieldLabel="", fieldStorage="string", fieldMeasure="", fieldFormat="", fieldRole="")
+var3 <- c(fieldName="Comment", fieldLabel="", fieldStorage="string", fieldMeasure="", fieldFormat="", fieldRole="")
+var4 <- c(fieldName="CreatedTime", fieldLabel="", fieldStorage="string", fieldMeasure="", fieldFormat="", fieldRole="")
+var5 <- c(fieldName="PostCommentedOn", fieldLabel="", fieldStorage="string", fieldMeasure="", fieldFormat="", fieldRole="")
+
+modelerDataModel <- data.frame(var1,var2,var3,var4,var5)
+
+if (dim(modelerData)[2] != 5) {
+   	warning("The loading process failed. Please verify your access token, the post_ID you specified.")
+}
